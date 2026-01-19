@@ -1,145 +1,125 @@
-# Black Jack V2
-#rama nueva
+#Black jack v3
+import csv
 import random
-import time
 
-jugadores = [
-    {"Jugador": "Humano", "Puntuacion": 0, "Plantado": False},
-    {"Jugador": "IA_facil", "Puntuacion": 0, "Plantado": False},
-    {"Jugador": "IA_medio", "Puntuacion": 0, "Plantado": False},
-    {"Jugador": "IA_dificil", "Puntuacion": 0, "Plantado": False}
-]
+dataset = []
+columnas = ["ID_Partida", "Tipo_IA", "Puntuacion_Final", "Resultado", "Cartas", "Plantado"]
 
-jugando = True
+partidas = 0
 
-while jugando:
-    todosplantados = True
+# --- MENÚ ---
+while True:
+    try:
+        menu = int(input("""
+1. Generar dataset muy pequeño (1 partida)
+2. Generar dataset pequeño (10 partidas)
+3. Generar dataset mediano (100 partidas)
+4. Generar dataset grande (1000 partidas)
+5. Generar dataset muy grande (10000 partidas)
+-> """))
+        if menu == 1 : partidas = 1
+        elif menu == 2 : partidas = 10
+        elif menu == 3 : partidas = 100
+        elif menu == 4 : partidas = 1000
+        elif menu == 5 : partidas = 10000
+        else: continue
+        break
+    except ValueError:
+        continue
 
-    for i in jugadores:
+print(f"Generando dataset de {partidas} partidas...")
 
-        # --- SI YA SE PASÓ, NO JUEGA ---
-        if i["Puntuacion"] > 21:
-            i["Plantado"] = True
-            continue
+# --- BUCLE DE PARTIDAS ---
+for id_partida in range(1, partidas + 1): # range(1, ...) para que el ID empiece en 1
+    jugadores = [
+        {"Jugador": "IA_facil", "Puntuacion": 0, "Plantado": False, "Cartas": 0, "Resultado": "Derrota"},
+        {"Jugador": "IA_medio", "Puntuacion": 0, "Plantado": False, "Cartas": 0, "Resultado": "Derrota"},
+        {"Jugador": "IA_dificil", "Puntuacion": 0, "Plantado": False, "Cartas": 0, "Resultado": "Derrota"}
+    ]
 
-        if not i["Plantado"]:
-            todosplantados = False
+    jugando = True
+    while jugando:
+        # CORRECCIÓN 1: Variable unificada (con guion bajo)
+        todos_plantados = True
+        
+        # Calcular rival para IA Difícil
+        puntuaciones_validas = [p["Puntuacion"] for p in jugadores if p["Puntuacion"] <= 21]
+        max_rival = max(puntuaciones_validas) if puntuaciones_validas else 0
 
-            # -------- HUMANO --------
-            if i["Jugador"] == "Humano":
-                pedir = ""
-                print("\n-------------------")
-                print("Tienes", i["Puntuacion"], "puntos")
+        for i in jugadores:
+            # --- SI YA SE PASÓ, NO JUEGA ---
+            if i["Puntuacion"] > 21 or i["Plantado"]:
+                continue
 
-                while pedir != "D" and pedir != "P":
-                    pedir = input("Quieres pedir dado (D) o plantarte (P)? ").upper()
+            # CORRECCIÓN 1b: Usar la misma variable
+            todos_plantados = False
+            pedir_carta = False
 
-                if pedir == "D":
-                    dado = random.randint(1, 6)
-                    print("Te ha tocado un", dado)
-                    i["Puntuacion"] += dado
-                else:
-                    print("Te has plantado")
-                    i["Plantado"] = True
-
-            # -------- IA FÁCIL --------
-            elif i["Jugador"] == "IA_facil":
-                if i["Puntuacion"] < 17:
-                    dado = random.randint(1, 6)
-                    i["Puntuacion"] += dado
-                    print(i["Jugador"], "tiene", i["Puntuacion"], "puntos")
-                else:
-                    i["Plantado"] = True
-                    print(i["Jugador"], "se planta con", i["Puntuacion"], "puntos")
-
-            # -------- IA MEDIA --------
+            # --- LÓGICA DE CADA BOT ---
+            if i["Jugador"] == "IA_facil":
+                if i["Puntuacion"] < 17: pedir_carta = True 
+                
             elif i["Jugador"] == "IA_medio":
-                if i["Puntuacion"] < 17:
-                    dado = random.randint(1, 6)
-                    i["Puntuacion"] += dado
-                    print(i["Jugador"], "tiene", i["Puntuacion"], "puntos")
+                if i["Puntuacion"] < 17: pedir_carta = True
                 elif i["Puntuacion"] in [17, 18, 19]:
-                    if random.randint(1, 10) <= 5:
-                        dado = random.randint(1, 6)
-                        i["Puntuacion"] += dado
-                        print(i["Jugador"], "tiene", i["Puntuacion"], "puntos")
-                    else:
-                        i["Plantado"] = True
-                        print(i["Jugador"], "se planta con", i["Puntuacion"], "puntos")
-                else:
-                    i["Plantado"] = True
-                    print(i["Jugador"], "se planta con", i["Puntuacion"], "puntos")
-
-            # -------- IA DIFÍCIL --------
+                    if random.random() < 0.5: pedir_carta = True 
+            
             elif i["Jugador"] == "IA_dificil":
-                if i["Puntuacion"] < 17:
-                    dado = random.randint(1, 6)
-                    i["Puntuacion"] += dado
-                    print(i["Jugador"], "tiene", i["Puntuacion"], "puntos")
+                if i["Puntuacion"] < 17: pedir_carta = True
                 elif i["Puntuacion"] in [17, 18, 19]:
-                    if jugadores[0]["Puntuacion"] < 17:
-                        prob = 7
+                    if max_rival < 17:
+                        if random.random() < 0.7: pedir_carta = True 
                     else:
-                        prob = 3
+                        if random.random() < 0.3: pedir_carta = True 
 
-                    if random.randint(1, 10) <= prob:
-                        dado = random.randint(1, 6)
-                        i["Puntuacion"] += dado
-                        print(i["Jugador"], "tiene", i["Puntuacion"], "puntos")
-                    else:
-                        i["Plantado"] = True
-                        print(i["Jugador"], "se planta con", i["Puntuacion"], "puntos")
-                else:
+            # --- EJECUTAR ACCIÓN ---
+            if pedir_carta:
+                i["Puntuacion"] += random.randint(1, 6)
+                i["Cartas"] += 1 
+                
+                # Prints solo si es 1 partida
+                if partidas == 1: 
+                    print(f"{i['Jugador']} pide y tiene {i['Puntuacion']}")
+                
+                if i["Puntuacion"] > 21:
                     i["Plantado"] = True
-                    print(i["Jugador"], "se planta con", i["Puntuacion"], "puntos")
-
-            # -------- COMPROBAR 21 --------
-            if i["Puntuacion"] == 21:
-                print(i["Jugador"], "ha llegado a 21. ¡Se acaba el juego!")
-                jugando = False
-                break
-
-            # -------- PASARSE DE 21 --------
-            if i["Puntuacion"] > 21:
-                print(i["Jugador"], "se ha pasado de 21")
+            else:
                 i["Plantado"] = True
+            
+        # CONDICIÓN DE SALIDA DEL BUCLE WHILE
+        if todos_plantados:
+            jugando = False
 
-        # --- COMPROBAR SI SOLO QUEDA UNO SIN PASARSE ---
-            vivos = [j for j in jugadores if j["Puntuacion"] <= 21]
+    # --- FINAL DE PARTIDA ---
+    # CORRECCIÓN 2: Arreglado el error de sintaxis en el filtro
+    vivos = [j for j in jugadores if j["Puntuacion"] <= 21]
 
-            if len(vivos) == 1:
-                print("\nTodos se han pasado menos uno.")
-                print("¡El ganador es", vivos[0]["Jugador"], "con", vivos[0]["Puntuacion"], "puntos!")
-                jugando = False
-                break
+    if vivos:
+        max_puntos = max(j["Puntuacion"] for j in vivos)
+        ganadores = [j for j in vivos if j["Puntuacion"] == max_puntos]
 
-    if todosplantados:
-        jugando = False
+        estado_ganador = "Victoria" if len(ganadores) == 1 else "Empate"
+        for g in ganadores:
+            g["Resultado"] = estado_ganador
 
-# -------- RESULTADOS --------
-max_puntuacion = 0
-ganadores = []
-time.sleep(3)
-for i in jugadores:
-    if i["Puntuacion"] <= 21:
-        if i["Puntuacion"] > max_puntuacion:
-            max_puntuacion = i["Puntuacion"]
-            ganadores = [i]
-        elif i["Puntuacion"] == max_puntuacion:
-            ganadores.append(i)
+    # Guardar en buffer
+    for i in jugadores:
+        dataset.append({
+            "ID_Partida": id_partida,
+            "Tipo_IA": i["Jugador"],
+            "Puntuacion_Final": i["Puntuacion"],
+            "Resultado": i["Resultado"],
+            "Cartas": i["Cartas"],
+            "Plantado": "Si" if i["Plantado"] else "No"
+        })
 
-print("\n===================")
-if not ganadores:
-    print("Todos los jugadores se han pasado de 21")
-elif len(ganadores) == 1:
-    print("Ha ganado el jugador", ganadores[0]["Jugador"],
-          "con", ganadores[0]["Puntuacion"], "puntos.")
-else:
-    print("¡EMPATE!")
-    print("Jugadores empatados con", max_puntuacion, "puntos:")
-    for g in ganadores:
-        print("-", g["Jugador"])
-
-print("\n--- Resultados finales ---")
-for i in jugadores:
-    print(i["Jugador"], "ha hecho un total de", i["Puntuacion"], "puntos")
+# --- ESCRIBIR CSV ---
+nombre_archivo = "dataset_blackjack.csv"
+try:
+    with open(nombre_archivo, mode="w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=columnas)
+        writer.writeheader()
+        writer.writerows(dataset)
+    print(f"\n¡Éxito! Archivo '{nombre_archivo}' creado con {len(dataset)} filas.")
+except Exception as e:
+    print(f"Error escribiendo el archivo: {e}")

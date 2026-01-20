@@ -1,4 +1,4 @@
-#Black jack v3
+# Black jack v3 
 import csv
 import random
 
@@ -7,7 +7,6 @@ columnas = ["ID_Partida", "Tipo_IA", "Puntuacion_Final", "Resultado", "Cartas", 
 
 partidas = 0
 
-# --- MENÚ ---
 while True:
     try:
         menu = int(input("""
@@ -29,8 +28,7 @@ while True:
 
 print(f"Generando dataset de {partidas} partidas...")
 
-# --- BUCLE DE PARTIDAS ---
-for id_partida in range(1, partidas + 1): # range(1, ...) para que el ID empiece en 1
+for id_partida in range(1, partidas + 1): 
     jugadores = [
         {"Jugador": "IA_facil", "Puntuacion": 0, "Plantado": False, "Cartas": 0, "Resultado": "Derrota"},
         {"Jugador": "IA_medio", "Puntuacion": 0, "Plantado": False, "Cartas": 0, "Resultado": "Derrota"},
@@ -39,23 +37,22 @@ for id_partida in range(1, partidas + 1): # range(1, ...) para que el ID empiece
 
     jugando = True
     while jugando:
-        # CORRECCIÓN 1: Variable unificada (con guion bajo)
         todos_plantados = True
         
-        # Calcular rival para IA Difícil
-        puntuaciones_validas = [p["Puntuacion"] for p in jugadores if p["Puntuacion"] <= 21]
+        puntuaciones_validas = []
+        for p in jugadores:
+            if p["Puntuacion"] <= 21:
+                puntuaciones_validas.append(p["Puntuacion"])
+
         max_rival = max(puntuaciones_validas) if puntuaciones_validas else 0
 
         for i in jugadores:
-            # --- SI YA SE PASÓ, NO JUEGA ---
             if i["Puntuacion"] > 21 or i["Plantado"]:
                 continue
 
-            # CORRECCIÓN 1b: Usar la misma variable
             todos_plantados = False
             pedir_carta = False
 
-            # --- LÓGICA DE CADA BOT ---
             if i["Jugador"] == "IA_facil":
                 if i["Puntuacion"] < 17: pedir_carta = True 
                 
@@ -72,12 +69,10 @@ for id_partida in range(1, partidas + 1): # range(1, ...) para que el ID empiece
                     else:
                         if random.random() < 0.3: pedir_carta = True 
 
-            # --- EJECUTAR ACCIÓN ---
             if pedir_carta:
                 i["Puntuacion"] += random.randint(1, 6)
                 i["Cartas"] += 1 
                 
-                # Prints solo si es 1 partida
                 if partidas == 1: 
                     print(f"{i['Jugador']} pide y tiene {i['Puntuacion']}")
                 
@@ -86,23 +81,34 @@ for id_partida in range(1, partidas + 1): # range(1, ...) para que el ID empiece
             else:
                 i["Plantado"] = True
             
-        # CONDICIÓN DE SALIDA DEL BUCLE WHILE
+        # Si todos están plantados, termina la partida
         if todos_plantados:
             jugando = False
 
     # --- FINAL DE PARTIDA ---
-    # CORRECCIÓN 2: Arreglado el error de sintaxis en el filtro
-    vivos = [j for j in jugadores if j["Puntuacion"] <= 21]
+    
+    vivos = []
+    for j in jugadores:
+        if j["Puntuacion"] <= 21:
+            vivos.append(j)
 
     if vivos:
-        max_puntos = max(j["Puntuacion"] for j in vivos)
-        ganadores = [j for j in vivos if j["Puntuacion"] == max_puntos]
+
+        lista_puntos_vivos = []
+        for j in vivos:
+            lista_puntos_vivos.append(j["Puntuacion"])
+        max_puntos = max(lista_puntos_vivos)
+
+ 
+        ganadores = []
+        for j in vivos:
+            if j["Puntuacion"] == max_puntos:
+                ganadores.append(j)
 
         estado_ganador = "Victoria" if len(ganadores) == 1 else "Empate"
         for g in ganadores:
             g["Resultado"] = estado_ganador
 
-    # Guardar en buffer
     for i in jugadores:
         dataset.append({
             "ID_Partida": id_partida,
@@ -113,7 +119,7 @@ for id_partida in range(1, partidas + 1): # range(1, ...) para que el ID empiece
             "Plantado": "Si" if i["Plantado"] else "No"
         })
 
-# --- ESCRIBIR CSV ---
+# --- CSV ---
 nombre_archivo = "dataset_blackjack.csv"
 try:
     with open(nombre_archivo, mode="w", newline="") as file:

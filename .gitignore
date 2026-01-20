@@ -1,0 +1,14 @@
+# --- Datos ---
+# Ignora todos los archivos CSV (para no subir datasets gigantes a GitHub)
+*.csv
+
+# --- Python ---
+# Archivos compilados (basura que genera Python al ejecutar)
+__pycache__/
+*.pyc
+
+# --- Entornos Virtuales ---
+# Si usas venv o env
+env/
+venv/
+.env
